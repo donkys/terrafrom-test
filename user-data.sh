@@ -42,6 +42,14 @@ ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose
 echo "Installing MySQL client..."
 yum install -y mysql
 
+# Install AWS CLI v2
+echo "Installing AWS CLI..."
+curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+yum install -y unzip
+unzip awscliv2.zip
+sudo ./aws/install
+rm -rf awscliv2.zip aws/
+
 # Create application directory
 echo "Creating application directories..."
 mkdir -p /home/ec2-user/backroom
@@ -133,149 +141,9 @@ mysql -h${db_host} -u${db_user} -p${db_password} -e "CREATE DATABASE IF NOT EXIS
 # Download and run database migrations
 echo "Setting up database schema..."
 
-# Copy the SQL initialization file to the instance
-cat > /tmp/V1__init.sql << 'EOSQL'
--- --------------------------------------------------------
--- Host:                         127.0.0.1
--- Server version:               8.0.39 - MySQL Community Server - GPL
--- Server OS:                    Win64
--- HeidiSQL Version:             12.11.0.7065
--- --------------------------------------------------------
-
-/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
-/*!40101 SET NAMES utf8 */;
-/*!50503 SET NAMES utf8mb4 */;
-/*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
-/*!40103 SET TIME_ZONE='+00:00' */;
-/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
-/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
-/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
-
--- Dumping structure for table appdb.audit_logs
-CREATE TABLE IF NOT EXISTS `audit_logs` (
-  `id` bigint NOT NULL AUTO_INCREMENT,
-  `actor_id` bigint DEFAULT NULL,
-  `action` varchar(64) COLLATE utf8mb4_general_ci NOT NULL,
-  `target_type` varchar(64) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `target_id` bigint DEFAULT NULL,
-  `ip_address` varchar(64) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `user_agent` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `payload_json` json DEFAULT NULL,
-  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  KEY `idx_action_time` (`action`,`created_at`)
-) ENGINE=InnoDB AUTO_INCREMENT=158 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
--- Dumping structure for table appdb.feature_flags
-CREATE TABLE IF NOT EXISTS `feature_flags` (
-  `id` bigint NOT NULL AUTO_INCREMENT,
-  `flag_key` varchar(100) COLLATE utf8mb4_general_ci NOT NULL,
-  `is_enabled` tinyint(1) NOT NULL DEFAULT '0',
-  `description` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `flag_key` (`flag_key`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
--- Dumping structure for table appdb.files
-CREATE TABLE IF NOT EXISTS `files` (
-  `id` bigint NOT NULL AUTO_INCREMENT,
-  `owner_id` bigint NOT NULL,
-  `s3_key` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
-  `cover_key` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `mime_type` varchar(128) COLLATE utf8mb4_general_ci NOT NULL,
-  `size_bytes` bigint NOT NULL,
-  `is_deleted` tinyint(1) NOT NULL DEFAULT '0',
-  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `name` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  KEY `idx_owner` (`owner_id`,`is_deleted`),
-  KEY `idx_created` (`created_at`)
-) ENGINE=InnoDB AUTO_INCREMENT=23 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
--- Dumping structure for table appdb.locales
-CREATE TABLE IF NOT EXISTS `locales` (
-  `id` bigint NOT NULL AUTO_INCREMENT,
-  `code` varchar(10) COLLATE utf8mb4_general_ci NOT NULL,
-  `name` varchar(100) COLLATE utf8mb4_general_ci NOT NULL,
-  `is_active` tinyint(1) NOT NULL DEFAULT '1',
-  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `code` (`code`)
-) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
--- Dumping data for table appdb.locales: ~2 rows (approximately)
-INSERT INTO `locales` (`id`, `code`, `name`, `is_active`, `created_at`, `updated_at`) VALUES
-	(11, 'th', 'ไทย', 1, '2025-09-08 19:14:39', '2025-09-08 19:14:39'),
-	(12, 'en', 'English', 1, '2025-09-08 19:14:39', '2025-09-08 19:14:39');
-
--- Dumping structure for table appdb.password_resets
-CREATE TABLE IF NOT EXISTS `password_resets` (
-  `id` bigint NOT NULL AUTO_INCREMENT,
-  `user_id` bigint NOT NULL,
-  `token_hash` char(64) COLLATE utf8mb4_general_ci NOT NULL,
-  `expires_at` datetime NOT NULL,
-  `used_at` datetime DEFAULT NULL,
-  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_user_token` (`user_id`,`token_hash`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
--- Dumping structure for table appdb.refresh_tokens
-CREATE TABLE IF NOT EXISTS `refresh_tokens` (
-  `id` bigint NOT NULL AUTO_INCREMENT,
-  `user_id` bigint NOT NULL,
-  `token_hash` char(64) COLLATE utf8mb4_general_ci NOT NULL,
-  `user_agent` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `ip_address` varchar(64) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `expires_at` datetime NOT NULL,
-  `revoked_at` datetime DEFAULT NULL,
-  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  KEY `idx_user_exp` (`user_id`,`expires_at`),
-  KEY `idx_user_rev` (`user_id`,`revoked_at`)
-) ENGINE=InnoDB AUTO_INCREMENT=174 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
--- Dumping structure for table appdb.translations
-CREATE TABLE IF NOT EXISTS `translations` (
-  `id` bigint NOT NULL AUTO_INCREMENT,
-  `namespace` varchar(64) COLLATE utf8mb4_general_ci NOT NULL,
-  `t_key` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
-  `locale_code` varchar(10) COLLATE utf8mb4_general_ci NOT NULL,
-  `t_value` text COLLATE utf8mb4_general_ci NOT NULL,
-  `updated_by` bigint DEFAULT NULL,
-  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_trans` (`namespace`,`t_key`,`locale_code`),
-  KEY `idx_ns_key` (`namespace`,`t_key`)
-) ENGINE=InnoDB AUTO_INCREMENT=610 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
--- Dumping structure for table appdb.users
-CREATE TABLE IF NOT EXISTS `users` (
-  `id` bigint NOT NULL AUTO_INCREMENT,
-  `email` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
-  `password_hash` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
-  `username` varchar(50) COLLATE utf8mb4_general_ci NOT NULL,
-  `display_name` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `avatar_key` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `banner_key` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `locale_pref` varchar(10) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `role` enum('user','admin') COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'user',
-  `is_active` tinyint(1) NOT NULL DEFAULT '1',
-  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `email` (`email`),
-  UNIQUE KEY `username` (`username`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-/*!40103 SET TIME_ZONE=IFNULL(@OLD_TIME_ZONE, 'system') */;
-/*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;
-/*!40014 SET FOREIGN_KEY_CHECKS=IFNULL(@OLD_FOREIGN_KEY_CHECKS, 1) */;
-/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
-/*!40111 SET SQL_NOTES=IFNULL(@OLD_SQL_NOTES, 1) */;
-EOSQL
+# Download SQL initialization file from S3
+echo "Downloading database initialization file from S3..."
+aws s3 cp s3://${s3_bucket}/database/V1__init.sql /tmp/V1__init.sql
 
 # Execute the SQL file
 echo "Executing database initialization script..."

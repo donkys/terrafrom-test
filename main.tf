@@ -174,6 +174,20 @@ resource "aws_s3_bucket" "backroom_storage" {
   }
 }
 
+# Upload V1__init.sql to S3 for database initialization
+resource "aws_s3_object" "db_init_sql" {
+  bucket = aws_s3_bucket.backroom_storage.bucket
+  key    = "database/V1__init.sql"
+  source = "${path.module}/V1__init.sql"
+  etag   = filemd5("${path.module}/V1__init.sql")
+
+  tags = {
+    Name        = "Database Init SQL"
+    Environment = var.environment
+    Project     = "BackRoom"
+  }
+}
+
 resource "random_string" "bucket_suffix" {
   length  = 8
   special = false
