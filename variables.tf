@@ -69,9 +69,16 @@ variable "ec2_instance_type" {
   default     = "t3.small"
 }
 
-variable "public_key_content" {
-  description = "Public key content for EC2 access"
+variable "existing_key_name" {
+  description = "Name of existing EC2 key pair"
   type        = string
+  default     = "BackRoom-keypair-terraform"
+}
+
+variable "public_key_content" {
+  description = "Public key content for EC2 access (not used when using existing key)"
+  type        = string
+  default     = ""
 }
 
 # ===== Application Variables =====

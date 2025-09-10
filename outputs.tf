@@ -74,7 +74,7 @@ output "backend_url" {
 # ===== SSH Connection =====
 output "ssh_connection" {
   description = "SSH connection command"
-  value       = "ssh -i ~/.ssh/${var.project_name}-key ec2-user@${aws_instance.backroom_server.public_ip}"
+  value       = "ssh -i ~/.ssh/${var.existing_key_name}.pem ec2-user@${aws_instance.backroom_server.public_ip}"
 }
 
 # ===== Environment File =====
