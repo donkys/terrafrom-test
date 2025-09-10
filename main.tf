@@ -329,7 +329,7 @@ resource "aws_instance" "backroom_server" {
   iam_instance_profile   = aws_iam_instance_profile.ec2_profile.name
 
   user_data = base64encode(templatefile("${path.module}/user-data.sh", {
-    db_host           = aws_db_instance.backroom_db.endpoint
+    db_host           = split(":", aws_db_instance.backroom_db.endpoint)[0]
     db_name           = var.database_name
     db_user           = var.database_username
     db_password       = var.database_password
