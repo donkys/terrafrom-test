@@ -113,7 +113,8 @@ services:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
       interval: 30s
       timeout: 10s
-      retries: 3
+      retries: 5
+      start_period: 120s
 
   frontend:
     image: ${frontend_image}
@@ -129,9 +130,10 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+      start_period: 60s
     depends_on:
       backend:
-        condition: service_healthy
+        condition: service_started
 
 networks:
   backroom-network:
