@@ -64,17 +64,28 @@ DB_HOST=${db_host}
 DB_PORT=3306
 DB_NAME=${db_name}
 DB_USER=${db_user}
-DB_PASSWORD=${db_password}
+DB_PASS=${db_password}
 
 # AWS Configuration  
 AWS_REGION=${aws_region}
 AWS_S3_BUCKET=${s3_bucket}
 
+# S3 Configuration
+S3_MODE=aws
+S3_REGION=${aws_region}
+S3_BUCKET=${s3_bucket}
+
 # Application Configuration
 NODE_ENV=production
-JWT_SECRET=${jwt_secret}
-API_PORT=8080
-CORS_ORIGIN=http://$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4)
+BACKEND_PORT=8080
+JWT_ACCESS_SECRET=${jwt_secret}
+JWT_REFRESH_SECRET=${jwt_secret}
+FRONTEND_ORIGIN=http://$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4)
+
+# Email Configuration (placeholder)
+EMAIL_FROM=noreply@backroom.dev
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
 
 # Frontend Configuration
 FRONTEND_URL=http://$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4)
