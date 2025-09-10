@@ -52,19 +52,19 @@ cd /home/ec2-user/backroom
 echo "Creating environment configuration..."
 cat > .env << EOF
 # Database Configuration
-DB_HOST=${DB_HOST}
+DB_HOST=${db_host}
 DB_PORT=3306
-DB_NAME=${DB_NAME}
-DB_USER=${DB_USER}
-DB_PASSWORD=${DB_PASSWORD}
+DB_NAME=${db_name}
+DB_USER=${db_user}
+DB_PASSWORD=${db_password}
 
 # AWS Configuration  
-AWS_REGION=${AWS_REGION}
-AWS_S3_BUCKET=${S3_BUCKET}
+AWS_REGION=${aws_region}
+AWS_S3_BUCKET=${s3_bucket}
 
 # Application Configuration
 NODE_ENV=production
-JWT_SECRET=${JWT_SECRET}
+JWT_SECRET=${jwt_secret}
 API_PORT=8080
 CORS_ORIGIN=http://$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4)
 
@@ -80,7 +80,7 @@ version: "3.9"
 
 services:
   backend:
-    image: ${BACKEND_IMAGE}
+    image: ${backend_image}
     ports:
       - "8080:8080"
     volumes:
@@ -97,7 +97,7 @@ services:
       retries: 3
 
   frontend:
-    image: ${FRONTEND_IMAGE}
+    image: ${frontend_image}
     ports:
       - "80:80"
     env_file:
@@ -121,21 +121,21 @@ EOF
 
 # Wait for database to be ready
 echo "Waiting for database to be ready..."
-until mysql -h${DB_HOST} -u${DB_USER} -p${DB_PASSWORD} -e "SELECT 1" >/dev/null 2>&1; do
+until mysql -h${db_host} -u${db_user} -p${db_password} -e "SELECT 1" >/dev/null 2>&1; do
   echo "Waiting for database connection..."
   sleep 10
 done
 
 # Create database if it doesn't exist
 echo "Creating database if not exists..."
-mysql -h${DB_HOST} -u${DB_USER} -p${DB_PASSWORD} -e "CREATE DATABASE IF NOT EXISTS ${DB_NAME};"
+mysql -h${db_host} -u${db_user} -p${db_password} -e "CREATE DATABASE IF NOT EXISTS ${db_name};"
 
 # Download and run database migrations
 echo "Setting up database schema..."
 # Note: You'll need to upload your SQL files to S3 or include them in the Docker image
 # For now, we'll create a basic structure
 
-mysql -h${DB_HOST} -u${DB_USER} -p${DB_PASSWORD} ${DB_NAME} << 'EOSQL'
+mysql -h${db_host} -u${db_user} -p${db_password} ${db_name} << 'EOSQL'
 -- Basic user table (modify according to your V1__init.sql)
 CREATE TABLE IF NOT EXISTS users (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -169,8 +169,8 @@ echo "Database setup completed."
 # Build/Pull Docker images
 echo "Pulling Docker images..."
 # For now, we'll use a placeholder. In production, you'd pull from ECR or Docker Hub
-# docker pull ${BACKEND_IMAGE}
-# docker pull ${FRONTEND_IMAGE}
+# docker pull ${backend_image}
+# docker pull ${frontend_image}
 
 # For development, we'll build images locally
 # You should upload your Docker images to a registry first
