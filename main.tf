@@ -359,7 +359,6 @@ resource "aws_instance" "backroom_server" {
     jwt_secret        = var.jwt_secret
     backend_image     = var.backend_docker_image
     frontend_image    = var.frontend_docker_image
-    site_name         = var.site_name
   }))
 
   tags = {
