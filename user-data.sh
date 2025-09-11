@@ -91,12 +91,12 @@ SMTP_PORT=587
 # Frontend Configuration
 FRONTEND_URL=http://$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4)
 API_BASE_URL=http://backend:8080
-VITE_SITE_NAME=${site_name}
+VITE_SITE_NAME=${SITE_NAME}
 EOF
 
 # Create docker-compose file for production
 echo "Creating Docker Compose configuration..."
-cat > docker-compose.yml << EOF
+cat > docker-compose.yml << 'EOF'
 version: "3.9"
 
 services:
@@ -123,7 +123,7 @@ services:
     ports:
       - "80:80"
     environment:
-      - VITE_SITE_NAME=\${SITE_NAME}
+      - VITE_SITE_NAME=${SITE_NAME}
     env_file:
       - .env
     networks:
