@@ -26,9 +26,9 @@ rds_max_allocated_storage = 100
 # Application Configuration
 jwt_secret = "BackroomSecretJWT2025!TestingOnly#SuperLongSecretKey"  # Random for testing
 
-# Docker Images (successfully built and pushed to Docker Hub)
-backend_docker_image  = "porapipatkae/backroom-backend:v1.0.0"
-frontend_docker_image = "porapipatkae/backroom-frontend:v1.0.0"
+# Docker Images (updated with site name support)
+backend_docker_image  = "porapipatkae/backroom-backend:v1.1.0"
+frontend_docker_image = "porapipatkae/backroom-frontend:v1.1.0"
 
 # SSH Key - Using existing key pair
 existing_key_name = "BackRoom-keypair-terraform"
