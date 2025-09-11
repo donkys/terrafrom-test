@@ -16,6 +16,7 @@ AWS_REGION="${aws_region}"
 JWT_SECRET="${jwt_secret}"
 BACKEND_IMAGE="${backend_image}"
 FRONTEND_IMAGE="${frontend_image}"
+SITE_NAME="${site_name}"
 
 # Logging
 exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
@@ -90,6 +91,7 @@ SMTP_PORT=587
 # Frontend Configuration
 FRONTEND_URL=http://$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4)
 API_BASE_URL=http://backend:8080
+VITE_SITE_NAME=${SITE_NAME}
 EOF
 
 # Create docker-compose file for production
@@ -120,6 +122,8 @@ services:
     image: ${frontend_image}
     ports:
       - "80:80"
+    environment:
+      - VITE_SITE_NAME=${SITE_NAME}
     env_file:
       - .env
     networks:
