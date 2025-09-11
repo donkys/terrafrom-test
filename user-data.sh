@@ -82,6 +82,9 @@ JWT_ACCESS_SECRET=${jwt_secret}
 JWT_REFRESH_SECRET=${jwt_secret}
 FRONTEND_ORIGIN=http://$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4)
 
+# Site Configuration
+SITE_NAME=${site_name}
+
 # Email Configuration (placeholder)
 EMAIL_FROM=noreply@backroom.dev
 SMTP_HOST=smtp.gmail.com
@@ -183,6 +186,10 @@ docker-compose up -d
 # Wait for services to be ready
 echo "Waiting for services to start..."
 sleep 30
+
+# Create frontend config file for runtime environment variables
+echo "Creating frontend runtime configuration..."
+docker exec backroom-frontend-1 sh -c "echo 'window.__APP_CONFIG__ = { siteName: \"${site_name}\" };' > /usr/share/nginx/html/config.js" 2>/dev/null || true
 
 # Check if services are running
 docker-compose ps
