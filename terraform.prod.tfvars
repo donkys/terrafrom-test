@@ -1,6 +1,7 @@
 # ===== Production Environment =====
 aws_region    = "us-east-1"
 project_name  = "backroom"
+site_name     = "prod-site"
 environment   = "prod"
 
 # Network Security - Restrict to your office/home IP
@@ -13,6 +14,9 @@ database_password = "CHANGE_THIS_TO_STRONG_PASSWORD"  # Use AWS Secrets Manager 
 
 # EC2 Configuration
 ec2_instance_type = "t3.medium"  # More resources for production
+ec2_root_volume_size = 50
+ec2_root_volume_type = "gp3"
+ec2_root_volume_encrypted = true
 
 # RDS Configuration
 rds_instance_class        = "db.t3.small"    # Better performance for production

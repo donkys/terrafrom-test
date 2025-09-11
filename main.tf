@@ -38,7 +38,7 @@ resource "aws_vpc" "backroom_vpc" {
   enable_dns_support   = true
 
   tags = {
-    Name        = "${var.project_name}-vpc"
+    Name        = "${var.project_name}-${var.site_name}-vpc"
     Environment = var.environment
   }
 }
@@ -47,7 +47,7 @@ resource "aws_internet_gateway" "backroom_igw" {
   vpc_id = aws_vpc.backroom_vpc.id
 
   tags = {
-    Name        = "${var.project_name}-igw"
+    Name        = "${var.project_name}-${var.site_name}-igw"
     Environment = var.environment
   }
 }
@@ -62,7 +62,7 @@ resource "aws_subnet" "public_subnets" {
   map_public_ip_on_launch = true
 
   tags = {
-    Name        = "${var.project_name}-public-subnet-${count.index + 1}"
+    Name        = "${var.project_name}-${var.site_name}-public-subnet-${count.index + 1}"
     Environment = var.environment
   }
 }
@@ -76,7 +76,7 @@ resource "aws_subnet" "private_subnets" {
   availability_zone = data.aws_availability_zones.available.names[count.index]
 
   tags = {
-    Name        = "${var.project_name}-private-subnet-${count.index + 1}"
+    Name        = "${var.project_name}-${var.site_name}-private-subnet-${count.index + 1}"
     Environment = var.environment
   }
 }
@@ -91,7 +91,7 @@ resource "aws_route_table" "public_rt" {
   }
 
   tags = {
-    Name        = "${var.project_name}-public-rt"
+    Name        = "${var.project_name}-${var.site_name}-public-rt"
     Environment = var.environment
   }
 }
@@ -105,7 +105,7 @@ resource "aws_route_table_association" "public_rta" {
 
 # ===== Security Groups =====
 resource "aws_security_group" "ec2_sg" {
-  name_prefix = "${var.project_name}-ec2-"
+  name_prefix = "${var.project_name}-${var.site_name}-ec2-"
   vpc_id      = aws_vpc.backroom_vpc.id
 
   # HTTP
@@ -141,13 +141,13 @@ resource "aws_security_group" "ec2_sg" {
   }
 
   tags = {
-    Name        = "${var.project_name}-ec2-sg"
+    Name        = "${var.project_name}-${var.site_name}-ec2-sg"
     Environment = var.environment
   }
 }
 
 resource "aws_security_group" "rds_sg" {
-  name_prefix = "${var.project_name}-rds-"
+  name_prefix = "${var.project_name}-${var.site_name}-rds-"
   vpc_id      = aws_vpc.backroom_vpc.id
 
   # MySQL
@@ -159,17 +159,17 @@ resource "aws_security_group" "rds_sg" {
   }
 
   tags = {
-    Name        = "${var.project_name}-rds-sg"
+    Name        = "${var.project_name}-${var.site_name}-rds-sg"
     Environment = var.environment
   }
 }
 
 # ===== S3 Bucket =====
 resource "aws_s3_bucket" "backroom_storage" {
-  bucket = "${var.project_name}-storage-${var.environment}-${random_string.bucket_suffix.result}"
+  bucket = "${var.project_name}-${var.site_name}-storage-${var.environment}-${random_string.bucket_suffix.result}"
 
   tags = {
-    Name        = "${var.project_name}-storage"
+    Name        = "${var.project_name}-${var.site_name}-storage"
     Environment = var.environment
   }
 }
@@ -222,18 +222,18 @@ resource "aws_s3_bucket_public_access_block" "backroom_storage_pab" {
 
 # ===== RDS Subnet Group =====
 resource "aws_db_subnet_group" "backroom_db_subnet_group" {
-  name       = "${var.project_name}-db-subnet-group"
+  name       = "${var.project_name}-${var.site_name}-db-subnet-group"
   subnet_ids = aws_subnet.private_subnets[*].id
 
   tags = {
-    Name        = "${var.project_name}-db-subnet-group"
+    Name        = "${var.project_name}-${var.site_name}-db-subnet-group"
     Environment = var.environment
   }
 }
 
 # ===== RDS Instance =====
 resource "aws_db_instance" "backroom_db" {
-  identifier = "${var.project_name}-db-${var.environment}"
+  identifier = "${var.project_name}-${var.site_name}-db-${var.environment}"
 
   # Engine
   engine         = "mysql"
@@ -266,14 +266,14 @@ resource "aws_db_instance" "backroom_db" {
   deletion_protection = var.environment == "prod" ? true : false
 
   tags = {
-    Name        = "${var.project_name}-db"
+    Name        = "${var.project_name}-${var.site_name}-db"
     Environment = var.environment
   }
 }
 
 # ===== IAM Role for EC2 =====
 resource "aws_iam_role" "ec2_role" {
-  name = "${var.project_name}-ec2-role"
+  name = "${var.project_name}-${var.site_name}-ec2-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -289,13 +289,13 @@ resource "aws_iam_role" "ec2_role" {
   })
 
   tags = {
-    Name        = "${var.project_name}-ec2-role"
+    Name        = "${var.project_name}-${var.site_name}-ec2-role"
     Environment = var.environment
   }
 }
 
 resource "aws_iam_policy" "s3_policy" {
-  name = "${var.project_name}-s3-policy"
+  name = "${var.project_name}-${var.site_name}-s3-policy"
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -323,7 +323,7 @@ resource "aws_iam_role_policy_attachment" "ec2_s3_policy" {
 }
 
 resource "aws_iam_instance_profile" "ec2_profile" {
-  name = "${var.project_name}-ec2-profile"
+  name = "${var.project_name}-${var.site_name}-ec2-profile"
   role = aws_iam_role.ec2_role.name
 }
 
@@ -342,6 +342,13 @@ resource "aws_instance" "backroom_server" {
   subnet_id              = aws_subnet.public_subnets[0].id
   iam_instance_profile   = aws_iam_instance_profile.ec2_profile.name
 
+  root_block_device {
+    volume_type = var.ec2_root_volume_type
+    volume_size = var.ec2_root_volume_size
+    encrypted   = var.ec2_root_volume_encrypted
+    delete_on_termination = true
+  }
+
   user_data = base64encode(templatefile("${path.module}/user-data.sh", {
     db_host           = split(":", aws_db_instance.backroom_db.endpoint)[0]
     db_name           = var.database_name
@@ -355,7 +362,7 @@ resource "aws_instance" "backroom_server" {
   }))
 
   tags = {
-    Name        = "${var.project_name}-server"
+    Name        = "${var.project_name}-${var.site_name}-server"
     Environment = var.environment
   }
 

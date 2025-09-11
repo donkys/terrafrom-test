@@ -1,6 +1,7 @@
 # ===== Development Environment =====
 aws_region    = "ap-southeast-1"  # Singapore region
 project_name  = "backroom"
+site_name     = "earthsite"
 environment   = "dev"
 
 # Network Security - Change to your IP for better security
@@ -13,6 +14,9 @@ database_password = "BackroomDev2025!"  # Change this to a strong password
 
 # EC2 Configuration
 ec2_instance_type = "t3.small"  # Suitable for development
+ec2_root_volume_size = 8
+ec2_root_volume_type = "gp3"
+ec2_root_volume_encrypted = true
 
 # RDS Configuration
 rds_instance_class      = "db.t3.micro"  # Free tier eligible

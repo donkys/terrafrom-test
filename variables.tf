@@ -12,6 +12,12 @@ variable "project_name" {
   default     = "backroom"
 }
 
+variable "site_name" {
+  description = "Name of the site"
+  type        = string
+  default     = "main"
+}
+
 variable "environment" {
   description = "Environment (dev, staging, prod)"
   type        = string
@@ -79,6 +85,24 @@ variable "public_key_content" {
   description = "Public key content for EC2 access (not used when using existing key)"
   type        = string
   default     = ""
+}
+
+variable "ec2_root_volume_size" {
+  description = "Size of the EC2 root volume in GB"
+  type        = number
+  default     = 20
+}
+
+variable "ec2_root_volume_type" {
+  description = "Type of the EC2 root volume (gp2, gp3, io1, io2)"
+  type        = string
+  default     = "gp3"
+}
+
+variable "ec2_root_volume_encrypted" {
+  description = "Whether to encrypt the EC2 root volume"
+  type        = bool
+  default     = true
 }
 
 # ===== Application Variables =====
