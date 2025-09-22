@@ -166,7 +166,8 @@ resource "aws_security_group" "rds_sg" {
 
 # ===== S3 Bucket =====
 resource "aws_s3_bucket" "backroom_storage" {
-  bucket = "${var.project_name}-${var.site_name}-storage-${var.environment}-${random_string.bucket_suffix.result}"
+  bucket        = "${var.project_name}-${var.site_name}-storage-${var.environment}-${random_string.bucket_suffix.result}"
+  force_destroy = true
 
   tags = {
     Name        = "${var.project_name}-${var.site_name}-storage"
